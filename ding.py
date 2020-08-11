@@ -44,7 +44,7 @@ def play(a):
     os.system(cmd)
 
 def save():
-    open(filename, 'w').write("{n} {goal} {last}\n".format(**globals()))
+    open(filename, 'w').write("{n} {goal} {now}\n".format(**globals()))
 
 now = int(time.time())
 
