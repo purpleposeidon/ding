@@ -3,13 +3,19 @@
 """
 This is a simple training counter program.
 
+Depends on:
+    mpv
+    espeak
 
-i3 config:
 
-    bindsym $mod+Shift+Home exec "ding ="
-    bindsym $mod+Home exec "ding +"
-    bindsym $mod+End exec "ding -"
-    bindsym $mod+Shift+End exec "ding 0"
+Suggested i3 configuration:
+
+    bindsym $mod+Home               exec "ding   score++   "
+    bindsym $mod+End                exec "ding   score--   "
+    bindsym $mod+Shift+Home         exec "ding   score?    "
+    bindsym $mod+Shift+End          exec "ding   reset     "
+    bindsym $mod+Ctrl+Shift+Home    exec "ding   goal++    "
+    bindsym $mod+Ctrl+Shift+End     exec "ding   goal--    "
 
 """
 
@@ -20,19 +26,22 @@ import sys, os, time
 
 filename = os.path.expanduser("~/.cache/ding")
 
+base = os.path.dirname(os.path.realpath(__file__))
+os.chdir(base)
+
+
 
 try: f = open(filename, 'r').read().strip()
 except: f = ''
 
 def say(a):
+    print(a)
     os.system("echo %r | espeak -a 50 &" % a)
-    raise SystemExit
 
 def play(a):
     # mplayer -volume 100 a
-    cmd = "mpv ~/Development/ding/%s.mp3 &" % a
+    cmd = "mpv ./%s.mp3 &" % a
     os.system(cmd)
-    print(cmd)
 
 def save():
     open(filename, 'w').write("{n} {goal} {last}\n".format(**globals()))
@@ -49,11 +58,15 @@ if last + RESET_TIME < now:
     save()
     say("starting over, score too old")
 
-if '0' in sys.argv:
+def cmd(*variants):
+    for a in variants:
+        if a in sys.argv: return True
+
+if cmd("reset", "0"):
     n = 0
     save()
     say("Reset")
-elif '+' in sys.argv:
+elif cmd("score++", "+"):
     n += 1
     print("{} / {}".format(n, goal))
     if n >= goal:
@@ -63,7 +76,7 @@ elif '+' in sys.argv:
     else:
         play("ding_incr")
     save()
-elif '-' in sys.argv:
+elif cmd("score--", "-"):
     n -= 1
     print("{} / {}".format(n, goal))
     if n < 0:
@@ -72,6 +85,16 @@ elif '-' in sys.argv:
     else:
         play("ding_decr")
     save()
-else:
+elif cmd("goal++", "goal--"):
+    if cmd("goal++"):
+        goal += 1
+    else:
+        goal -= 1
+    if goal < 2:
+        goal = 2
+    save()
+    say("goal is " + str(goal))
+elif cmd("score?", "?"):
     say("score is " + str(n) + " out of " + str(goal))
-
+else:
+    print("See source for usage.")
